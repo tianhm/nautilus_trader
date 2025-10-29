@@ -4,21 +4,26 @@ Released on TBD (UTC).
 
 ### Enhancements
 - Added initial backtest visualization tearsheets with plotly
+- Added `proxy_url` support for HTTP clients
 - Added `CAGR` portfolio statistic
 - Added `CalmarRatio` portfolio statistic
 - Added `MaxDrawdown` portfolio statistic
 - Upgraded continuous reconciliation for execution engine using position reports to detect missed fills
+- Ported Bybit integration adapter to Rust
 
 ### Breaking Changes
 - Dropped support for Python 3.11
+- Removed `use_ws_trade_api` config option from Bybit execution client (using WebSocket trade API only)
 
 ### Security
 TBD
 
 ### Fixes
 - Fixed OKX spot margin position reports for borrowing
+- Fixed spawned order client_id caching in `ExecAlgorithm`, thanks for reporting @kirill-gr1
 
 ### Internal Improvements
+- Added BitMEX submit broadcaster
 - Refactored reading of feather files in catalog (#3114), thanks @faysou
 - Upgraded implied-vol crate (#3115), thanks @faysou
 

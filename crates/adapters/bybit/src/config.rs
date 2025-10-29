@@ -15,10 +15,12 @@
 
 //! Configuration structures for the Bybit adapter.
 
+use std::collections::HashMap;
+
 use nautilus_model::identifiers::AccountId;
 
 use crate::common::{
-    enums::{BybitEnvironment, BybitProductType},
+    enums::{BybitEnvironment, BybitMarginMode, BybitPositionMode, BybitProductType},
     urls::{bybit_http_base_url, bybit_ws_private_url, bybit_ws_public_url, bybit_ws_trade_url},
 };
 
@@ -53,6 +55,13 @@ pub struct BybitDataClientConfig {
     pub recv_window_ms: Option<u64>,
     /// Optional interval (minutes) for instrument refresh from REST.
     pub update_instruments_interval_mins: Option<u64>,
+    /// Optional HTTP proxy URL.
+    pub http_proxy_url: Option<String>,
+    /// Optional WebSocket proxy URL.
+    ///
+    /// Note: WebSocket proxy support is not yet implemented. This field is reserved
+    /// for future functionality. Use `http_proxy_url` for REST API proxy support.
+    pub ws_proxy_url: Option<String>,
 }
 
 impl Default for BybitDataClientConfig {
@@ -72,6 +81,8 @@ impl Default for BybitDataClientConfig {
             heartbeat_interval_secs: Some(20),
             recv_window_ms: Some(5_000),
             update_instruments_interval_mins: Some(60),
+            http_proxy_url: None,
+            ws_proxy_url: None,
         }
     }
 }
@@ -166,6 +177,21 @@ pub struct BybitExecClientConfig {
     pub recv_window_ms: Option<u64>,
     /// Optional account identifier to associate with the execution client.
     pub account_id: Option<AccountId>,
+    /// Whether to generate position reports from wallet balances for SPOT positions.
+    pub use_spot_position_reports: bool,
+    /// Leverage configuration for futures (symbol -> leverage).
+    pub futures_leverages: Option<HashMap<String, u32>>,
+    /// Position mode configuration for symbols (symbol -> mode).
+    pub position_mode: Option<HashMap<String, BybitPositionMode>>,
+    /// Unified margin mode setting.
+    pub margin_mode: Option<BybitMarginMode>,
+    /// Optional HTTP proxy URL.
+    pub http_proxy_url: Option<String>,
+    /// Optional WebSocket proxy URL.
+    ///
+    /// Note: WebSocket proxy support is not yet implemented. This field is reserved
+    /// for future functionality. Use `http_proxy_url` for REST API proxy support.
+    pub ws_proxy_url: Option<String>,
 }
 
 impl Default for BybitExecClientConfig {
@@ -185,6 +211,12 @@ impl Default for BybitExecClientConfig {
             heartbeat_interval_secs: Some(5),
             recv_window_ms: Some(5_000),
             account_id: None,
+            use_spot_position_reports: false,
+            futures_leverages: None,
+            position_mode: None,
+            margin_mode: None,
+            http_proxy_url: None,
+            ws_proxy_url: None,
         }
     }
 }
