@@ -148,6 +148,7 @@ TBD
 - Refined bar aggregators in Rust (#3170), thanks @faysou
 - Refined adding files to catalog session (#3215), thanks @faysou
 - Refined `HistoricInteractiveBrokersClient` (#3187), thanks @faysou
+- Refined `BacktestDataIterator` docstrings (#3264), thanks @faysou
 - Optimized unnecessary string allocations and `Ustr` usage
 - Optimized build to prefer sccache when available (#3243), thanks @sunlei
 - Optimized execution reconciliation to avoid quadratic complexity (#3140), thanks @DeirhX

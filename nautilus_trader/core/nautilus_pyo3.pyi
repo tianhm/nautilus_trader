@@ -7980,7 +7980,7 @@ class KrakenSpotHttpClient:
         price: Price | None = None,
         reduce_only: bool = False,
         post_only: bool = False,
-    ) -> OrderStatusReport: ...
+    ) -> VenueOrderId: ...
     async def cancel_order(
         self,
         account_id: AccountId,

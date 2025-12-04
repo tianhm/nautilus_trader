@@ -45,13 +45,15 @@ token = "ETH"
 if product_type == KrakenProductType.SPOT:
     symbol = f"{token}/USDT"
     order_qty = Decimal("0.001")
-    enable_limit_sells = False  # Don't own base when starting fresh
+    enable_limit_sells = False  # May not own base token when starting fresh
+    reduce_only_on_stop = False  # Not supported on spot
     environment = KrakenEnvironment.MAINNET
 elif product_type == KrakenProductType.FUTURES:
     # Kraken Futures perpetual symbols use PI_ prefix (e.g., PI_XBTUSD, PI_ETHUSD)
     symbol = f"PI_{token}USD"
     order_qty = Decimal(10)
-    enable_limit_sells = True  # Can go short on futures
+    enable_limit_sells = True
+    reduce_only_on_stop = True
     environment = KrakenEnvironment.TESTNET  # Use demo-futures.kraken.com
 else:
     raise ValueError(f"Unsupported product type: {product_type}")
@@ -129,6 +131,7 @@ strat_config = ExecTesterConfig(
     # use_individual_cancels_on_stop=True,
     use_post_only=True,
     # close_positions_on_stop=False,
+    reduce_only_on_stop=reduce_only_on_stop,
     log_data=False,
 )
 

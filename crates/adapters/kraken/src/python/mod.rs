@@ -51,10 +51,8 @@ fn py_kraken_product_type_from_symbol(symbol: &str) -> KrakenProductType {
 pub fn kraken(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<KrakenEnvironment>()?;
     m.add_class::<KrakenProductType>()?;
-    // HTTP clients
     m.add_class::<KrakenSpotHttpClient>()?;
     m.add_class::<KrakenFuturesHttpClient>()?;
-    // WebSocket clients
     m.add_class::<KrakenSpotWebSocketClient>()?;
     m.add_class::<KrakenFuturesWebSocketClient>()?;
 

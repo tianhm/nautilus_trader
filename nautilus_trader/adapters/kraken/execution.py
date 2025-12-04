@@ -42,7 +42,6 @@ from nautilus_trader.execution.messages import CancelOrder
 from nautilus_trader.execution.messages import GenerateFillReports
 from nautilus_trader.execution.messages import GenerateOrderStatusReports
 from nautilus_trader.execution.messages import GeneratePositionStatusReports
-from nautilus_trader.execution.messages import ModifyOrder
 from nautilus_trader.execution.messages import SubmitOrder
 from nautilus_trader.execution.messages import SubmitOrderList
 from nautilus_trader.execution.reports import FillReport
@@ -552,26 +551,8 @@ class KrakenExecutionClient(LiveExecutionClient):
                 ),
             )
 
-    async def _modify_order(self, command: ModifyOrder) -> None:
-        # Kraken doesn't support order modification directly
-        # Would need to cancel and resubmit
-        order: Order | None = self._cache.order(command.client_order_id)
-        if order is None:
-            self._log.error(f"{command.client_order_id!r} not found in cache")
-            return
-
-        self._log.warning(
-            "Kraken does not support order modification, cancel and resubmit the order",
-        )
-
-        self.generate_order_modify_rejected(
-            strategy_id=order.strategy_id,
-            instrument_id=order.instrument_id,
-            client_order_id=order.client_order_id,
-            venue_order_id=order.venue_order_id,
-            reason="Order modification not supported by Kraken",
-            ts_event=self._clock.timestamp_ns(),
-        )
+    # TODO: Implement
+    # async def _modify_order(self, command: ModifyOrder) -> None:
 
     async def _cancel_order(self, command: CancelOrder) -> None:
         order: Order | None = self._cache.order(command.client_order_id)
@@ -645,7 +626,7 @@ class KrakenExecutionClient(LiveExecutionClient):
                 count = await client.cancel_all_orders(pyo3_instrument_id)
             else:
                 count = await client.cancel_all_orders()
-            self._log.info(f"Cancelled {count} orders for {command.instrument_id}")
+            self._log.debug(f"Cancelled {count} orders for {command.instrument_id}")
         except Exception as e:
             self._log.error(f"Failed to cancel all orders for {command.instrument_id}: {e}")
 

@@ -118,9 +118,6 @@ async def test_futures_public(client: KrakenFuturesHttpClient):
     except Exception:
         print("[WARN] Index price unavailable in testnet")
 
-    # Return mark price or latest trade price for order placement tests
-    return mark_price or (trades[-1].price if trades else None)
-
     # Test 5: Request bars
     print("\n[5/5] Requesting 1-minute bars for PI_XBTUSD...")
     try:
@@ -131,10 +128,13 @@ async def test_futures_public(client: KrakenFuturesHttpClient):
         bars = await client.request_bars(bar_type, start, end, limit=10)
         print(f"[OK] Received {len(bars)} bars")
         if bars:
-            latest = bars[-1]
-            print(f"  Latest: O={latest.open} H={latest.high} L={latest.low} C={latest.close} V={latest.volume}")
+            bar = bars[-1]
+            print(f"  Latest: O={bar.open} H={bar.high} L={bar.low} C={bar.close} V={bar.volume}")
     except Exception:
         print("[WARN] Bars unavailable in testnet")
+
+    # Return mark price or latest trade price for order placement tests
+    return mark_price or (trades[-1].price if trades else None)
 
 
 async def test_futures_authenticated(client: KrakenFuturesHttpClient, account_id: AccountId):

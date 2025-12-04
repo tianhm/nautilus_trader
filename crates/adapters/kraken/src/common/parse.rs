@@ -541,16 +541,13 @@ pub fn parse_order_status_report(
         trailing_offset: None,
         trailing_offset_type: TrailingOffsetType::NoTrailingOffset,
         display_qty: None,
-        avg_px: if !order.cost.is_empty() && !order.vol_exec.is_empty() && order.vol_exec != "0" {
-            let cost = parse_decimal(&order.cost)?;
-            let vol_exec = parse_decimal(&order.vol_exec)?;
-            if vol_exec > dec!(0) {
-                Some(cost / vol_exec)
-            } else {
-                None
+        avg_px: {
+            let cost = parse_decimal(&order.cost).ok();
+            let vol_exec = parse_decimal(&order.vol_exec).ok();
+            match (cost, vol_exec) {
+                (Some(c), Some(v)) if v > dec!(0) => Some(c / v),
+                _ => None,
             }
-        } else {
-            None
         },
         post_only: order.oflags.contains("post"),
         reduce_only: false,

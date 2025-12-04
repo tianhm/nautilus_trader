@@ -51,6 +51,7 @@ use ustr::Ustr;
 use super::{models::*, query::*};
 use crate::{
     common::{
+        consts::NAUTILUS_KRAKEN_BROKER_ID,
         credential::KrakenCredential,
         enums::{
             KrakenApiResult, KrakenEnvironment, KrakenFuturesOrderType, KrakenOrderSide,
@@ -1363,7 +1364,7 @@ impl KrakenFuturesHttpClient {
             .get_cached_instrument(&instrument_id.symbol.inner())
             .ok_or_else(|| anyhow::anyhow!("Instrument not found in cache: {instrument_id}"))?;
 
-        let raw_symbol = instrument.raw_symbol().to_string();
+        let raw_symbol = instrument.raw_symbol().inner();
 
         // Map order type and time-in-force to Kraken order type
         // Kraken Futures encodes TIF in the orderType field:
@@ -1393,11 +1394,12 @@ impl KrakenFuturesHttpClient {
 
         let mut builder = KrakenFuturesSendOrderParamsBuilder::default();
         builder
+            .cli_ord_id(client_order_id.to_string())
+            .broker(NAUTILUS_KRAKEN_BROKER_ID)
             .symbol(raw_symbol)
             .side(KrakenOrderSide::from(order_side))
-            .order_type(kraken_order_type)
             .size(quantity.to_string())
-            .cli_ord_id(client_order_id.to_string());
+            .order_type(kraken_order_type);
 
         // Handle prices based on order type
         match order_type {

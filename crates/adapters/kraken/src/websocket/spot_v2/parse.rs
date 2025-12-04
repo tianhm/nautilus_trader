@@ -151,7 +151,6 @@ pub fn parse_book_deltas(
     let mut deltas = Vec::new();
     let mut current_sequence = sequence;
 
-    // Process bids
     if let Some(ref bids) = book.bids {
         for level in bids {
             let delta = parse_book_level(
@@ -169,7 +168,6 @@ pub fn parse_book_deltas(
         }
     }
 
-    // Process asks
     if let Some(ref asks) = book.asks {
         for level in asks {
             let delta = parse_book_level(
@@ -397,9 +395,16 @@ pub fn parse_ws_order_status_report(
         report = report.with_price(price);
     }
 
-    if let Some(avg_price) = exec.avg_price
-        && avg_price > 0.0
-    {
+    // avg_px fallback: avg_price -> cum_cost / cum_qty
+    let avg_px =
+        exec.avg_price
+            .filter(|&p| p > 0.0)
+            .or_else(|| match (exec.cum_cost, exec.cum_qty) {
+                (Some(cost), Some(qty)) if qty > 0.0 => Some(cost / qty),
+                _ => None,
+            });
+
+    if let Some(avg_price) = avg_px {
         report = report.with_avg_px(avg_price)?;
     }
 

@@ -521,7 +521,6 @@ impl FuturesFeedHandler {
                 ts_init,
             ));
 
-            // Add bids
             for level in &snapshot.bids {
                 let order = BookOrder::new(
                     OrderSide::Buy,
@@ -540,7 +539,6 @@ impl FuturesFeedHandler {
                 ));
             }
 
-            // Add asks
             for level in &snapshot.asks {
                 let order = BookOrder::new(
                     OrderSide::Sell,

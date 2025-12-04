@@ -291,7 +291,7 @@ impl KrakenSpotHttpClient {
         let client = self.clone();
 
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let report = client
+            let venue_order_id = client
                 .submit_order(
                     account_id,
                     instrument_id,
@@ -307,7 +307,7 @@ impl KrakenSpotHttpClient {
                 .await
                 .map_err(to_pyruntime_err)?;
 
-            Python::attach(|py| report.into_pyobject(py).map(|o| o.unbind()))
+            Python::attach(|py| venue_order_id.into_pyobject(py).map(|o| o.unbind()))
         })
     }
 

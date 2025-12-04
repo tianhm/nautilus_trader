@@ -17,6 +17,7 @@
 
 use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
+use ustr::Ustr;
 
 use crate::common::enums::{KrakenFuturesOrderType, KrakenOrderSide, KrakenTriggerSignal};
 
@@ -29,7 +30,7 @@ use crate::common::enums::{KrakenFuturesOrderType, KrakenOrderSide, KrakenTrigge
 #[builder(setter(into, strip_option), build_fn(validate = "Self::validate"))]
 pub struct KrakenFuturesSendOrderParams {
     /// The symbol of the futures contract (e.g., "PI_XBTUSD").
-    pub symbol: String,
+    pub symbol: Ustr,
 
     /// The order side: "buy" or "sell".
     pub side: KrakenOrderSide,
@@ -78,7 +79,7 @@ pub struct KrakenFuturesSendOrderParams {
     /// Partner/broker attribution ID.
     #[builder(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub broker: Option<String>,
+    pub broker: Option<Ustr>,
 }
 
 impl KrakenFuturesSendOrderParamsBuilder {
@@ -168,7 +169,7 @@ pub struct KrakenFuturesEditOrderParams {
 pub struct KrakenFuturesCancelAllOrdersParams {
     /// Optional symbol filter - only cancel orders for this symbol.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub symbol: Option<String>,
+    pub symbol: Option<Ustr>,
 }
 
 /// Parameters for getting open orders via `GET /api/v3/openorders`.
@@ -229,7 +230,7 @@ mod tests {
             .build()
             .unwrap();
 
-        assert_eq!(params.symbol, "PI_XBTUSD");
+        assert_eq!(params.symbol, Ustr::from("PI_XBTUSD"));
         assert_eq!(params.side, KrakenOrderSide::Buy);
         assert_eq!(params.order_type, KrakenFuturesOrderType::Limit);
         assert_eq!(params.size, "1000");

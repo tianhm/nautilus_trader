@@ -32,8 +32,13 @@ use axum::{
     response::Response,
 };
 use nautilus_kraken::{
-    common::enums::{KrakenApiResult, KrakenEnvironment, KrakenOrderStatus},
-    http::{KrakenFuturesRawHttpClient, KrakenSpotHttpClient, KrakenSpotRawHttpClient},
+    common::enums::{
+        KrakenApiResult, KrakenEnvironment, KrakenOrderSide, KrakenOrderStatus, KrakenOrderType,
+    },
+    http::{
+        KrakenFuturesRawHttpClient, KrakenSpotAddOrderParamsBuilder,
+        KrakenSpotCancelOrderParamsBuilder, KrakenSpotHttpClient, KrakenSpotRawHttpClient,
+    },
 };
 use nautilus_model::{
     data::BarType,
@@ -1577,14 +1582,16 @@ async fn test_spot_raw_add_order() {
     )
     .unwrap();
 
-    let mut params = HashMap::new();
-    params.insert("pair".to_string(), "XBTUSD".to_string());
-    params.insert("type".to_string(), "buy".to_string());
-    params.insert("ordertype".to_string(), "limit".to_string());
-    params.insert("volume".to_string(), "0.01".to_string());
-    params.insert("price".to_string(), "50000".to_string());
+    let params = KrakenSpotAddOrderParamsBuilder::default()
+        .pair("XBTUSD")
+        .side(KrakenOrderSide::Buy)
+        .order_type(KrakenOrderType::Limit)
+        .volume("0.01")
+        .price("50000")
+        .build()
+        .unwrap();
 
-    let result = client.add_order(params).await;
+    let result = client.add_order(&params).await;
     assert!(result.is_ok(), "Failed to add order: {result:?}");
 
     let response = result.unwrap();
@@ -1620,9 +1627,12 @@ async fn test_spot_raw_cancel_order() {
     )
     .unwrap();
 
-    let result = client
-        .cancel_order(Some("OUF4EM-FRGI2-MQMWZD".to_string()), None)
-        .await;
+    let params = KrakenSpotCancelOrderParamsBuilder::default()
+        .txid("OUF4EM-FRGI2-MQMWZD")
+        .build()
+        .unwrap();
+
+    let result = client.cancel_order(&params).await;
     assert!(result.is_ok(), "Failed to cancel order: {result:?}");
 
     let response = result.unwrap();

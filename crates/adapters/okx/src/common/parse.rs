@@ -1438,10 +1438,22 @@ fn parse_common_instrument_data(
         )
     })?;
 
+    if definition.lot_sz.is_empty() {
+        anyhow::bail!("`lot_sz` is empty for {}", definition.inst_id);
+    }
+
     let size_increment = Quantity::from(&definition.lot_sz);
     let lot_size = Some(Quantity::from(&definition.lot_sz));
-    let max_quantity = Some(Quantity::from(&definition.max_mkt_sz));
-    let min_quantity = Some(Quantity::from(&definition.min_sz));
+    let max_quantity = if definition.max_mkt_sz.is_empty() {
+        None
+    } else {
+        Some(Quantity::from(&definition.max_mkt_sz))
+    };
+    let min_quantity = if definition.min_sz.is_empty() {
+        None
+    } else {
+        Some(Quantity::from(&definition.min_sz))
+    };
     let max_notional: Option<Money> = None;
     let min_notional: Option<Money> = None;
     let max_price = None; // TBD

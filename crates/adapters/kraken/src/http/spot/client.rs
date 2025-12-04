@@ -51,12 +51,12 @@ use serde::de::DeserializeOwned;
 use tokio_util::sync::CancellationToken;
 use ustr::Ustr;
 
-use super::models::*;
+use super::{models::*, query::*};
 use crate::{
     common::{
         consts::NAUTILUS_KRAKEN_BROKER_ID,
         credential::KrakenCredential,
-        enums::{KrakenEnvironment, KrakenProductType},
+        enums::{KrakenEnvironment, KrakenOrderSide, KrakenOrderType, KrakenProductType},
         parse::{
             bar_type_to_spot_interval, parse_bar, parse_fill_report, parse_order_status_report,
             parse_spot_instrument, parse_trade_tick_from_array,
@@ -658,7 +658,7 @@ impl KrakenSpotRawHttpClient {
 
     pub async fn add_order(
         &self,
-        params: HashMap<String, String>,
+        params: &KrakenSpotAddOrderParams,
     ) -> anyhow::Result<SpotAddOrderResponse, KrakenHttpError> {
         if self.credential.is_none() {
             return Err(KrakenHttpError::AuthenticationError(
@@ -666,7 +666,7 @@ impl KrakenSpotRawHttpClient {
             ));
         }
 
-        let param_string = serde_urlencoded::to_string(&params)
+        let param_string = serde_urlencoded::to_string(params)
             .map_err(|e| KrakenHttpError::ParseError(format!("Failed to encode params: {e}")))?;
         let body = Some(param_string.into_bytes());
 
@@ -681,8 +681,7 @@ impl KrakenSpotRawHttpClient {
 
     pub async fn cancel_order(
         &self,
-        txid: Option<String>,
-        cl_ord_id: Option<String>,
+        params: &KrakenSpotCancelOrderParams,
     ) -> anyhow::Result<SpotCancelOrderResponse, KrakenHttpError> {
         if self.credential.is_none() {
             return Err(KrakenHttpError::AuthenticationError(
@@ -690,15 +689,7 @@ impl KrakenSpotRawHttpClient {
             ));
         }
 
-        let mut params = HashMap::new();
-        if let Some(id) = txid {
-            params.insert("txid".to_string(), id);
-        }
-        if let Some(id) = cl_ord_id {
-            params.insert("cl_ord_id".to_string(), id);
-        }
-
-        let param_string = serde_urlencoded::to_string(&params)
+        let param_string = serde_urlencoded::to_string(params)
             .map_err(|e| KrakenHttpError::ParseError(format!("Failed to encode params: {e}")))?;
         let body = Some(param_string.into_bytes());
 
@@ -731,7 +722,7 @@ impl KrakenSpotRawHttpClient {
 
     pub async fn edit_order(
         &self,
-        params: HashMap<String, String>,
+        params: &KrakenSpotEditOrderParams,
     ) -> anyhow::Result<SpotEditOrderResponse, KrakenHttpError> {
         if self.credential.is_none() {
             return Err(KrakenHttpError::AuthenticationError(
@@ -739,7 +730,7 @@ impl KrakenSpotRawHttpClient {
             ));
         }
 
-        let param_string = serde_urlencoded::to_string(&params)
+        let param_string = serde_urlencoded::to_string(params)
             .map_err(|e| KrakenHttpError::ParseError(format!("Failed to encode params: {e}")))?;
         let body = Some(param_string.into_bytes());
 
@@ -1260,6 +1251,8 @@ impl KrakenSpotHttpClient {
 
     /// Submit a new order to the Kraken Spot exchange.
     ///
+    /// Returns the venue order ID on success. WebSocket handles all execution events.
+    ///
     /// # Errors
     ///
     /// Returns an error if:
@@ -1271,7 +1264,7 @@ impl KrakenSpotHttpClient {
     #[allow(clippy::too_many_arguments)]
     pub async fn submit_order(
         &self,
-        account_id: AccountId,
+        _account_id: AccountId,
         instrument_id: InstrumentId,
         client_order_id: ClientOrderId,
         order_side: OrderSide,
@@ -1281,45 +1274,28 @@ impl KrakenSpotHttpClient {
         price: Option<Price>,
         reduce_only: bool,
         post_only: bool,
-    ) -> anyhow::Result<OrderStatusReport> {
+    ) -> anyhow::Result<VenueOrderId> {
         let instrument = self
             .get_cached_instrument(&instrument_id.symbol.inner())
             .ok_or_else(|| anyhow::anyhow!("Instrument not found in cache: {instrument_id}"))?;
 
-        let raw_symbol = instrument.raw_symbol().to_string();
+        let raw_symbol = instrument.raw_symbol().inner();
 
         let kraken_side = match order_side {
-            OrderSide::Buy => "buy",
-            OrderSide::Sell => "sell",
+            OrderSide::Buy => KrakenOrderSide::Buy,
+            OrderSide::Sell => KrakenOrderSide::Sell,
             _ => anyhow::bail!("Invalid order side: {order_side:?}"),
         };
 
         let kraken_order_type = match order_type {
-            OrderType::Market => "market",
-            OrderType::Limit => "limit",
-            OrderType::StopMarket => "stop-loss",
-            OrderType::StopLimit => "stop-loss-limit",
-            OrderType::MarketIfTouched => "take-profit",
-            OrderType::LimitIfTouched => "take-profit-limit",
+            OrderType::Market => KrakenOrderType::Market,
+            OrderType::Limit => KrakenOrderType::Limit,
+            OrderType::StopMarket => KrakenOrderType::StopLoss,
+            OrderType::StopLimit => KrakenOrderType::StopLossLimit,
+            OrderType::MarketIfTouched => KrakenOrderType::TakeProfit,
+            OrderType::LimitIfTouched => KrakenOrderType::TakeProfitLimit,
             _ => anyhow::bail!("Unsupported order type: {order_type:?}"),
         };
-
-        // Kraken cl_ord_id requires UUID format - use `use_uuid_client_order_ids=True` in strategy config
-        let cl_ord_id = client_order_id.to_string();
-
-        let mut params = HashMap::new();
-        params.insert("pair".to_string(), raw_symbol);
-        params.insert("type".to_string(), kraken_side.to_string());
-        params.insert("ordertype".to_string(), kraken_order_type.to_string());
-        params.insert("volume".to_string(), quantity.to_string());
-        params.insert("cl_ord_id".to_string(), cl_ord_id);
-
-        // Add broker ID for partner attribution
-        params.insert("broker".to_string(), NAUTILUS_KRAKEN_BROKER_ID.to_string());
-
-        if let Some(price) = price {
-            params.insert("price".to_string(), price.to_string());
-        }
 
         // Build oflags based on time in force and order options
         let mut oflags = Vec::new();
@@ -1343,30 +1319,38 @@ impl KrakenSpotHttpClient {
         }
 
         if reduce_only {
-            // Kraken Spot doesn't support reduce_only, ignore silently
             tracing::warn!("reduce_only is not supported by Kraken Spot API, ignoring");
         }
 
-        if !oflags.is_empty() {
-            params.insert("oflags".to_string(), oflags.join(","));
+        let mut builder = KrakenSpotAddOrderParamsBuilder::default();
+        builder
+            .cl_ord_id(client_order_id.to_string())
+            .broker(NAUTILUS_KRAKEN_BROKER_ID)
+            .pair(raw_symbol)
+            .side(kraken_side)
+            .volume(quantity.to_string())
+            .order_type(kraken_order_type);
+
+        if let Some(price) = price {
+            builder.price(price.to_string());
         }
 
-        let response = self.inner.add_order(params).await?;
+        if !oflags.is_empty() {
+            builder.oflags(oflags.join(","));
+        }
+
+        let params = builder
+            .build()
+            .map_err(|e| anyhow::anyhow!("Failed to build order params: {e}"))?;
+
+        let response = self.inner.add_order(&params).await?;
 
         let venue_order_id = response
             .txid
             .first()
             .ok_or_else(|| anyhow::anyhow!("No transaction ID in order response"))?;
 
-        // Query the order to get full status
-        let orders = self.inner.get_open_orders(Some(true), None).await?;
-
-        let order = orders
-            .get(venue_order_id)
-            .ok_or_else(|| anyhow::anyhow!("Order not found after submission: {venue_order_id}"))?;
-
-        let ts_init = self.generate_ts_init();
-        parse_order_status_report(venue_order_id, order, &instrument, account_id, ts_init)
+        Ok(VenueOrderId::new(venue_order_id))
     }
 
     /// Cancel an order on the Kraken Spot exchange.
@@ -1396,7 +1380,18 @@ impl KrakenSpotHttpClient {
             anyhow::bail!("Either client_order_id or venue_order_id must be provided");
         }
 
-        let _response = self.inner.cancel_order(txid.clone(), cl_ord_id).await?;
+        let mut builder = KrakenSpotCancelOrderParamsBuilder::default();
+        if let Some(ref id) = txid {
+            builder.txid(id.clone());
+        }
+        if let Some(id) = cl_ord_id {
+            builder.cl_ord_id(id);
+        }
+        let params = builder
+            .build()
+            .map_err(|e| anyhow::anyhow!("Failed to build cancel params: {e}"))?;
+
+        let _response = self.inner.cancel_order(&params).await?;
 
         // Query the order to get final status
         let order_id = txid.ok_or_else(|| {
