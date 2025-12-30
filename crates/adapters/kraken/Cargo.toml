@@ -90,14 +90,17 @@ url = { workspace = true }
 [[bin]]
 name = "kraken-http-spot-raw"
 path = "bin/http_spot_raw.rs"
+doc = false
 
 [[bin]]
 name = "kraken-http-spot-public"
 path = "bin/http_spot_public.rs"
+doc = false
 
 [[bin]]
 name = "kraken-ws-spot-data"
 path = "bin/ws_spot_data.rs"
+doc = false
 
 # Run with `cargo bench -p nautilus-kraken --bench websocket`
 [[bench]]

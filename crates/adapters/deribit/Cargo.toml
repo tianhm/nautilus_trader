@@ -102,22 +102,27 @@ axum = { workspace = true }
 [[bin]]
 name = "deribit-http-public"
 path = "bin/http_public.rs"
+doc = false
 
 [[bin]]
 name = "deribit-http-private"
 path = "bin/http_private.rs"
+doc = false
 
 [[bin]]
 name = "deribit-ws-data"
 path = "bin/ws_data.rs"
+doc = false
 
 [[example]]
 name = "deribit-data-tester"
 path = "examples/node_data_tester.rs"
+doc = false
 
 [[example]]
 name = "deribit-exec-tester"
 path = "examples/node_exec_tester.rs"
+doc = false
 
 # Run with `cargo bench -p nautilus-deribit --bench websocket`
 [[bench]]

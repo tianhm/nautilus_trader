@@ -44,7 +44,7 @@
 //!
 //! - dYdX v4 Indexer API: <https://docs.dydx.trade/developers/indexer/indexer_api>
 //!
-//! # Official documentation
+//! # Official Documentation
 //!
 //! See: <https://docs.dydx.exchange/api_integration-indexer/indexer_api>
 

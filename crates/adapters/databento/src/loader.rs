@@ -43,7 +43,7 @@ use crate::{decode::decode_instrument_def_msg, symbology::MetadataCache};
 
 /// A Nautilus data loader for Databento Binary Encoding (DBN) format data.
 ///
-/// # Supported schemas:
+/// # Supported Schemas
 ///  - `MBO` -> `OrderBookDelta`
 ///  - `MBP_1` -> `(QuoteTick, Option<TradeTick>)`
 ///  - `MBP_10` -> `OrderBookDepth10`

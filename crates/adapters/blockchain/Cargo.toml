@@ -94,8 +94,10 @@ turmoil = { workspace = true }
 name = "node_test"
 path = "bin/node_test.rs"
 required-features = ["hypersync"]
+doc = false
 
 [[bin]]
 name = "node_wallet"
 path = "bin/node_wallet.rs"
 required-features = ["hypersync"]
+doc = false

@@ -21,10 +21,13 @@ import pytest
 from nautilus_trader.adapters.polymarket.common.constants import POLYMARKET_MAX_PRICE
 from nautilus_trader.adapters.polymarket.common.constants import POLYMARKET_MIN_PRICE
 from nautilus_trader.adapters.polymarket.common.constants import POLYMARKET_VENUE
+from nautilus_trader.adapters.polymarket.common.enums import PolymarketEventType
 from nautilus_trader.adapters.polymarket.common.enums import PolymarketLiquiditySide
 from nautilus_trader.adapters.polymarket.common.enums import PolymarketOrderSide
 from nautilus_trader.adapters.polymarket.common.enums import PolymarketOrderStatus
 from nautilus_trader.adapters.polymarket.common.enums import PolymarketOrderType
+from nautilus_trader.adapters.polymarket.common.enums import PolymarketTradeStatus
+from nautilus_trader.adapters.polymarket.common.parsing import determine_order_side
 from nautilus_trader.adapters.polymarket.common.parsing import parse_polymarket_instrument
 from nautilus_trader.adapters.polymarket.schemas.book import PolymarketBookLevel
 from nautilus_trader.adapters.polymarket.schemas.book import PolymarketBookSnapshot
@@ -46,6 +49,7 @@ from nautilus_trader.model.enums import AccountType
 from nautilus_trader.model.enums import AggressorSide
 from nautilus_trader.model.enums import BookType
 from nautilus_trader.model.enums import OmsType
+from nautilus_trader.model.enums import OrderSide
 from nautilus_trader.model.identifiers import AccountId
 from nautilus_trader.model.instruments import BinaryOption
 from nautilus_trader.model.objects import Money
@@ -764,3 +768,209 @@ def test_parse_open_order_to_order_status_report_ts_accepted():
     # Assert - created_at in seconds should convert to nanoseconds
     assert report.ts_accepted == 1725842520000000000
     assert report.ts_last == 1725842520000000000
+
+
+ASSET_ID_YES = "21742633143463906290569050155826241533067272736897614950488156847949938836455"
+ASSET_ID_NO = "48331043336612883890938759509493159234755048973500640148014422747788308965732"
+
+
+@pytest.mark.parametrize(
+    ("trader_side", "trade_side", "maker_asset_id", "expected_order_side"),
+    [
+        # TAKER: always uses trade side directly
+        (PolymarketLiquiditySide.TAKER, PolymarketOrderSide.BUY, ASSET_ID_YES, OrderSide.BUY),
+        (PolymarketLiquiditySide.TAKER, PolymarketOrderSide.SELL, ASSET_ID_YES, OrderSide.SELL),
+        # MAKER same-asset: inverts the side
+        (PolymarketLiquiditySide.MAKER, PolymarketOrderSide.BUY, ASSET_ID_YES, OrderSide.SELL),
+        (PolymarketLiquiditySide.MAKER, PolymarketOrderSide.SELL, ASSET_ID_YES, OrderSide.BUY),
+        # MAKER cross-asset: uses trade side (same as taker)
+        (PolymarketLiquiditySide.MAKER, PolymarketOrderSide.BUY, ASSET_ID_NO, OrderSide.BUY),
+        (PolymarketLiquiditySide.MAKER, PolymarketOrderSide.SELL, ASSET_ID_NO, OrderSide.SELL),
+    ],
+    ids=[
+        "taker_buy",
+        "taker_sell",
+        "maker_same_asset_buy",
+        "maker_same_asset_sell",
+        "maker_cross_asset_buy",
+        "maker_cross_asset_sell",
+    ],
+)
+def test_determine_order_side(
+    trader_side: PolymarketLiquiditySide,
+    trade_side: PolymarketOrderSide,
+    maker_asset_id: str,
+    expected_order_side: OrderSide,
+) -> None:
+    """
+    Test determine_order_side() correctly handles cross-asset matching.
+
+    Regression test for
+    https://github.com/nautechsystems/nautilus_trader/issues/3357
+
+    """
+    result = determine_order_side(
+        trader_side=trader_side,
+        trade_side=trade_side,
+        taker_asset_id=ASSET_ID_YES,
+        maker_asset_id=maker_asset_id,
+    )
+    assert result == expected_order_side
+
+
+@pytest.mark.parametrize(
+    ("trader_side", "trade_side", "maker_asset_id", "expected_order_side"),
+    [
+        # TAKER: always uses trade side directly
+        (PolymarketLiquiditySide.TAKER, PolymarketOrderSide.BUY, ASSET_ID_YES, OrderSide.BUY),
+        (PolymarketLiquiditySide.TAKER, PolymarketOrderSide.SELL, ASSET_ID_YES, OrderSide.SELL),
+        # MAKER same-asset: inverts the side
+        (PolymarketLiquiditySide.MAKER, PolymarketOrderSide.BUY, ASSET_ID_YES, OrderSide.SELL),
+        (PolymarketLiquiditySide.MAKER, PolymarketOrderSide.SELL, ASSET_ID_YES, OrderSide.BUY),
+        # MAKER cross-asset: uses trade side (same as taker)
+        (PolymarketLiquiditySide.MAKER, PolymarketOrderSide.BUY, ASSET_ID_NO, OrderSide.BUY),
+        (PolymarketLiquiditySide.MAKER, PolymarketOrderSide.SELL, ASSET_ID_NO, OrderSide.SELL),
+    ],
+    ids=[
+        "taker_buy",
+        "taker_sell",
+        "maker_same_asset_buy",
+        "maker_same_asset_sell",
+        "maker_cross_asset_buy",
+        "maker_cross_asset_sell",
+    ],
+)
+def test_polymarket_user_trade_order_side(
+    trader_side: PolymarketLiquiditySide,
+    trade_side: PolymarketOrderSide,
+    maker_asset_id: str,
+    expected_order_side: OrderSide,
+) -> None:
+    """
+    Test PolymarketUserTrade.order_side() correctly handles cross-asset matching.
+
+    Regression test for
+    https://github.com/nautechsystems/nautilus_trader/issues/3357
+
+    """
+    taker_order_id = "taker-order-123"
+    maker_order_id = "maker-order-456"
+
+    user_trade = PolymarketUserTrade(
+        asset_id=ASSET_ID_YES,
+        bucket_index=0,
+        fee_rate_bps="0",
+        id="test-trade-id",
+        last_update="1725868885",
+        maker_address="0x1234",
+        maker_orders=[
+            PolymarketMakerOrder(
+                asset_id=maker_asset_id,
+                fee_rate_bps="0",
+                maker_address="0x5678",
+                matched_amount="100",
+                order_id=maker_order_id,
+                outcome="Yes" if maker_asset_id == ASSET_ID_YES else "No",
+                owner="maker-owner",
+                price="0.5",
+            ),
+        ],
+        market="0xdd22472e552920b8438158ea7238bfadfa4f736aa4cee91a6b86c39ead110917",
+        match_time="1725868859",
+        outcome="Yes",
+        owner="test-owner",
+        price="0.5",
+        side=trade_side,
+        size="100",
+        status=PolymarketTradeStatus.MINED,
+        taker_order_id=taker_order_id,
+        timestamp="1725868885871",
+        trade_owner="test-owner",
+        trader_side=trader_side,
+        type=PolymarketEventType.TRADE,
+    )
+
+    # Act
+    filled_order_id = taker_order_id if trader_side == PolymarketLiquiditySide.TAKER else maker_order_id
+    result = user_trade.order_side(filled_order_id)
+
+    # Assert
+    assert result == expected_order_side
+
+
+@pytest.mark.parametrize(
+    ("trader_side", "trade_side", "maker_asset_id", "expected_order_side"),
+    [
+        # TAKER: always uses trade side directly
+        (PolymarketLiquiditySide.TAKER, PolymarketOrderSide.BUY, ASSET_ID_YES, OrderSide.BUY),
+        (PolymarketLiquiditySide.TAKER, PolymarketOrderSide.SELL, ASSET_ID_YES, OrderSide.SELL),
+        # MAKER same-asset: inverts the side
+        (PolymarketLiquiditySide.MAKER, PolymarketOrderSide.BUY, ASSET_ID_YES, OrderSide.SELL),
+        (PolymarketLiquiditySide.MAKER, PolymarketOrderSide.SELL, ASSET_ID_YES, OrderSide.BUY),
+        # MAKER cross-asset: uses trade side (same as taker)
+        (PolymarketLiquiditySide.MAKER, PolymarketOrderSide.BUY, ASSET_ID_NO, OrderSide.BUY),
+        (PolymarketLiquiditySide.MAKER, PolymarketOrderSide.SELL, ASSET_ID_NO, OrderSide.SELL),
+    ],
+    ids=[
+        "taker_buy",
+        "taker_sell",
+        "maker_same_asset_buy",
+        "maker_same_asset_sell",
+        "maker_cross_asset_buy",
+        "maker_cross_asset_sell",
+    ],
+)
+def test_polymarket_trade_report_order_side(
+    trader_side: PolymarketLiquiditySide,
+    trade_side: PolymarketOrderSide,
+    maker_asset_id: str,
+    expected_order_side: OrderSide,
+) -> None:
+    """
+    Test PolymarketTradeReport.order_side() correctly handles cross-asset matching.
+
+    Regression test for
+    https://github.com/nautechsystems/nautilus_trader/issues/3357
+
+    """
+    taker_order_id = "taker-order-123"
+    maker_order_id = "maker-order-456"
+
+    trade_report = PolymarketTradeReport(
+        id="test-trade-id",
+        taker_order_id=taker_order_id,
+        market="0xdd22472e552920b8438158ea7238bfadfa4f736aa4cee91a6b86c39ead110917",
+        asset_id=ASSET_ID_YES,
+        side=trade_side,
+        size="100",
+        fee_rate_bps="0",
+        price="0.5",
+        status="MINED",
+        match_time="1725868859",
+        last_update="1725868885",
+        outcome="Yes",
+        bucket_index=0,
+        owner="test-owner",
+        maker_address="0x1234",
+        transaction_hash="0xabcd",
+        maker_orders=[
+            PolymarketMakerOrder(
+                asset_id=maker_asset_id,
+                fee_rate_bps="0",
+                maker_address="0x5678",
+                matched_amount="100",
+                order_id=maker_order_id,
+                outcome="Yes" if maker_asset_id == ASSET_ID_YES else "No",
+                owner="maker-owner",
+                price="0.5",
+            ),
+        ],
+        trader_side=trader_side,
+    )
+
+    # Act
+    filled_order_id = taker_order_id if trader_side == PolymarketLiquiditySide.TAKER else maker_order_id
+    result = trade_report.order_side(filled_order_id)
+
+    # Assert
+    assert result == expected_order_side

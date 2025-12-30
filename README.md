@@ -96,8 +96,9 @@ Not only that, Python has become the *de facto lingua franca* of data science, m
 concurrency. Rust is "blazingly fast" and memory-efficient (comparable to C and C++) with no garbage collector.
 It can power mission-critical systems, run on embedded devices, and easily integrates with other languages.
 
-Rust’s rich type system and ownership model guarantees memory-safety and thread-safety deterministically —
-eliminating many classes of bugs at compile-time.
+Rust's rich type system and ownership model guarantee memory-safety and thread-safety in safe code,
+eliminating many classes of bugs at compile-time. Overall safety in this project also depends on
+correctly upheld invariants in unsafe blocks and FFI boundaries.
 
 The project increasingly utilizes Rust for core performance-critical components. Python bindings are implemented via Cython and [PyO3](https://pyo3.rs)—no Rust toolchain is required at install time.
 

@@ -100,23 +100,29 @@ indexmap = { workspace = true }
 [[bin]]
 name = "dydx-http-public"
 path = "bin/http_public.rs"
+doc = false
 
 [[bin]]
 name = "dydx-http-private"
 path = "bin/http_private.rs"
+doc = false
 
 [[bin]]
 name = "dydx-ws-data"
 path = "bin/ws_data.rs"
+doc = false
 
 [[bin]]
 name = "dydx-live-integration"
 path = "bin/live_integration.rs"
+doc = false
 
 [[bin]]
 name = "dydx-grpc-exec"
 path = "bin/grpc_exec.rs"
+doc = false
 
 [[bin]]
 name = "dydx-ws-exec"
 path = "bin/ws_exec.rs"
+doc = false

@@ -96,11 +96,13 @@ axum = { workspace = true }
 [[bin]]
 name = "bybit-http"
 path = "bin/http.rs"
+doc = false
 
 # Run with `cargo run -p nautilus-bybit --bin bybit-ws-data`.
 [[bin]]
 name = "bybit-ws-data"
 path = "bin/ws_data.rs"
+doc = false
 
 # Run with `cargo bench -p nautilus-bybit --bench websocket`
 [[bench]]

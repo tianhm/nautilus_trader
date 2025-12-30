@@ -83,8 +83,10 @@ tracing-test = { workspace = true }
 name = "databento-sandbox"
 path = "bin/sandbox.rs"
 required-features = ["python"]
+doc = false
 
 [[bin]]
 name = "databento-node-test"
 path = "bin/node_test.rs"
 required-features = ["live"]
+doc = false

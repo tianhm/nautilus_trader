@@ -88,7 +88,8 @@ impl Add<Nanos> for Duration {
 /// what "now" is (relative to some point meaningful to the program),
 /// and returns that.
 ///
-/// # Thread safety
+/// # Thread Safety
+///
 /// The mock time is represented as an atomic u64 count of nanoseconds, behind an [`Arc`].
 /// Clones of this clock will all show the same time, even if the original advances.
 #[derive(Debug, Clone, Default)]

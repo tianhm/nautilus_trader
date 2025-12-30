@@ -37,7 +37,7 @@ pub mod base;
 
 /// Defines the interface for an execution client managing order operations.
 ///
-/// # Thread safety
+/// # Thread Safety
 ///
 /// Client instances are not intended to be sent across threads. The `?Send` bound
 /// allows implementations to hold non-Send state for any Python interop.

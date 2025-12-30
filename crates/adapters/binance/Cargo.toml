@@ -102,7 +102,9 @@ axum = { workspace = true }
 [[bin]]
 name = "binance-spot-http-public"
 path = "bin/http_public.rs"
+doc = false
 
 [[example]]
 name = "node-data-tester"
 path = "examples/node_data_tester.rs"
+doc = false

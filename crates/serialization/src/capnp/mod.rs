@@ -18,7 +18,7 @@
 //! This module provides Cap'n Proto serialization support for Nautilus domain types.
 //! The generated schema modules are available at the crate root for proper cross-referencing.
 //!
-//! # Generated modules
+//! # Generated Modules
 //!
 //! The following modules are generated from Cap'n Proto schemas:
 //! - `crate::base_capnp` - Base types (UUID4, UnixNanos, StringMap)

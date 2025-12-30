@@ -70,7 +70,7 @@ const STACKSTR_BUFFER_SIZE: usize = STACKSTR_CAPACITY + 1;
 /// always holds exactly the capacity in characters. This aligns with identifier
 /// conventions which are inherently ASCII.
 ///
-/// # Memory layout
+/// # Memory Layout
 ///
 /// The `value` field is placed first so the struct pointer equals the string
 /// pointer, making C FFI more natural: `(char*)&stack_str` works directly.

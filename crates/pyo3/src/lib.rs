@@ -28,7 +28,7 @@
 //! NautilusTrader's design, architecture, and implementation philosophy prioritizes software correctness and safety at the
 //! highest level, with the aim of supporting mission-critical, trading system backtesting and live deployment workloads.
 //!
-//! # Feature flags
+//! # Feature Flags
 //!
 //! This crate is primarily intended to be built for Python via
 //! [maturin](https://github.com/PyO3/maturin) and therefore provides a broad set of feature flags

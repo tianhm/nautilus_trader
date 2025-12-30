@@ -25,6 +25,7 @@ from nautilus_trader.adapters.polymarket.common.enums import PolymarketOrderSide
 from nautilus_trader.adapters.polymarket.common.enums import PolymarketOrderStatus
 from nautilus_trader.adapters.polymarket.common.enums import PolymarketOrderType
 from nautilus_trader.adapters.polymarket.common.enums import PolymarketTradeStatus
+from nautilus_trader.adapters.polymarket.common.parsing import determine_order_side
 from nautilus_trader.adapters.polymarket.common.parsing import parse_order_side
 from nautilus_trader.adapters.polymarket.common.parsing import parse_order_status
 from nautilus_trader.adapters.polymarket.common.parsing import parse_time_in_force
@@ -203,12 +204,13 @@ class PolymarketUserTrade(msgspec.Struct, tag="trade", tag_field="event_type", f
         else:
             return LiquiditySide.TAKER
 
-    def order_side(self) -> OrderSide:
-        order_side = parse_order_side(self.side)
-        if self.trader_side == PolymarketLiquiditySide.TAKER:
-            return order_side
-        else:  # MAKER
-            return OrderSide.BUY if order_side == OrderSide.SELL else OrderSide.SELL
+    def order_side(self, filled_user_order_id: str) -> OrderSide:
+        return determine_order_side(
+            trader_side=self.trader_side,
+            trade_side=self.side,
+            taker_asset_id=self.asset_id,
+            maker_asset_id=self.get_asset_id(filled_user_order_id),
+        )
 
     def venue_order_id(self, filled_user_order_id: str) -> VenueOrderId:
         if self.trader_side == PolymarketLiquiditySide.TAKER:
@@ -257,7 +259,7 @@ class PolymarketUserTrade(msgspec.Struct, tag="trade", tag_field="event_type", f
             client_order_id=client_order_id,
             venue_order_id=self.venue_order_id(filled_user_order_id),
             trade_id=TradeId(self.id),
-            order_side=self.order_side(),
+            order_side=self.order_side(filled_user_order_id),
             last_qty=last_qty,
             last_px=last_px,
             commission=Money(commission, USDC_POS),

@@ -25,7 +25,7 @@ use super::nanos::Nanos;
 ///
 /// Neither the number of cells nor the replenishment unit of time may be zero.
 ///
-/// # Burst sizes
+/// # Burst Sizes
 /// There are multiple ways of expressing the same quota: a quota given as `Quota::per_second(1)`
 /// allows, on average, the same number of cells through as a quota given as `Quota::per_minute(60)`.
 /// The quota of `Quota::per_minute(60)` has a burst size of 60 cells, meaning it is

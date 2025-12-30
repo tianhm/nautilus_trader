@@ -45,3 +45,4 @@ ustr = { workspace = true }
 [[bin]]
 name = "nautilus"
 path = "src/bin/cli.rs"
+doc = false

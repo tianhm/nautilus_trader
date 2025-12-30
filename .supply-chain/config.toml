@@ -1289,7 +1289,7 @@ version = "2.11.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.iri-string]]
-version = "0.7.9"
+version = "0.7.10"
 criteria = "safe-to-deploy"
 
 [[exemptions.is-macro]]
@@ -1629,7 +1629,7 @@ version = "11.1.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.openssl-probe]]
-version = "0.1.6"
+version = "0.2.0"
 criteria = "safe-to-deploy"
 
 [[exemptions.ordered-float]]
@@ -2005,7 +2005,7 @@ version = "0.23.35"
 criteria = "safe-to-deploy"
 
 [[exemptions.rustls-native-certs]]
-version = "0.8.2"
+version = "0.8.3"
 criteria = "safe-to-deploy"
 
 [[exemptions.rustls-pemfile]]
@@ -2844,6 +2844,10 @@ criteria = "safe-to-deploy"
 version = "0.8.31"
 criteria = "safe-to-deploy"
 
+[[exemptions.zeroize_derive]]
+version = "1.4.3"
+criteria = "safe-to-deploy"
+
 [[exemptions.zerotrie]]
 version = "0.2.3"
 criteria = "safe-to-deploy"
@@ -2857,7 +2861,7 @@ version = "0.5.5"
 criteria = "safe-to-deploy"
 
 [[exemptions.zmij]]
-version = "1.0.1"
+version = "1.0.2"
 criteria = "safe-to-deploy"
 
 [[exemptions.zstd]]

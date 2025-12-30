@@ -25,7 +25,7 @@
 //! • Deserialization of JSON payloads into domain models.
 //! • Conversion of raw exchange errors into the rich [`OKXHttpError`] enum.
 //!
-//! # Official documentation
+//! # Official Documentation
 //!
 //! | Endpoint                             | Reference                                              |
 //! |--------------------------------------|--------------------------------------------------------|

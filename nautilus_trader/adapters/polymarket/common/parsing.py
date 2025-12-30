@@ -64,6 +64,35 @@ def parse_order_side(order_side: PolymarketOrderSide) -> OrderSide:
             raise ValueError(f"invalid order side, was {order_side}")
 
 
+def determine_order_side(
+    trader_side: PolymarketLiquiditySide,
+    trade_side: PolymarketOrderSide,
+    taker_asset_id: str,
+    maker_asset_id: str,
+) -> OrderSide:
+    """
+    Determine the order side for a fill based on trader role and asset matching.
+
+    Polymarket uses a unified order book where complementary tokens (YES/NO) can match
+    across assets. This means a BUY YES can match with a BUY NO (cross-asset), not just
+    with a SELL YES (same-asset).
+
+    """
+    order_side = parse_order_side(trade_side)
+    if trader_side == PolymarketLiquiditySide.TAKER:
+        return order_side
+
+    # For MAKER: determine side based on whether assets match
+    is_cross_asset = maker_asset_id != taker_asset_id
+
+    if is_cross_asset:
+        # Cross-asset match: both sides are the same
+        return order_side
+    else:
+        # Same-asset match: sides are opposite
+        return OrderSide.BUY if order_side == OrderSide.SELL else OrderSide.SELL
+
+
 def parse_liquidity_side(liquidity_side: PolymarketLiquiditySide) -> LiquiditySide:
     match liquidity_side:
         case PolymarketLiquiditySide.MAKER:

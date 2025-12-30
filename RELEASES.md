@@ -130,6 +130,7 @@ This release adds support for Python 3.14 with the following limitations:
 - Fixed Polymarket `match_time` timestamp parsing (#3273), thanks for reporting @santivazq
 - Fixed Polymarket timestamp conversions (#3291, #3292), thanks for reporting @santivazq
 - Fixed Polymarket fill reports for cross-asset matches (#3345), thanks for reporting @santivazq
+- Fixed Polymarket order side for cross-asset matches (#3357), thanks for reporting @santivazq
 - Fixed Tardis book snapshot to deltas CLEAR prepending
 - Fixed Tardis CSV parsing for mid-day snapshots
 

@@ -42,7 +42,7 @@
 //! as query parameters. Order submission and trading operations use gRPC with blockchain
 //! transaction signing, not REST API.
 //!
-//! # Official documentation
+//! # Official Documentation
 //!
 //! | Endpoint                             | Reference                                              |
 //! |--------------------------------------|--------------------------------------------------------|
